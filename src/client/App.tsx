@@ -1,9 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { parseMarkdown, validateTitle, validateBody, validateBlacklist, fetchWithRetry } from './utils';
+import { parseMarkdown, validateTitle, validateBody, validateBlacklist } from './utils';
 
-// Client States
+let messageId = 0;
+const pendingRequests = new Map<number, { resolve: (val: any) => void; reject: (err: any) => void }>();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (data && typeof data === 'object' && 'requestId' in data) {
+      const { requestId, payload, error } = data;
+      const request = pendingRequests.get(requestId);
+      if (request) {
+        pendingRequests.delete(requestId);
+        if (error) {
+          request.reject(new Error(error));
+        } else {
+          request.resolve(payload);
+        }
+      }
+    }
+  });
+}
+
+function callBackend(type: string, payload?: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const requestId = ++messageId;
+    pendingRequests.set(requestId, { resolve, reject });
+    window.parent.postMessage({ type, requestId, payload }, '*');
+  });
+}
+
+/**
+ * Valid states representing the flat state machine of the composer portal.
+ */
 type ComposerState = 'INITIALIZING' | 'DRAFTING' | 'VALIDATING' | 'SUBMITTING' | 'SUCCESS' | 'ERROR';
 
+/**
+ * Subreddit constraint rules configuration retrieved from settings.
+ */
 interface SubredditRules {
   title_regex: string;
   min_body: number;
@@ -13,54 +47,62 @@ interface SubredditRules {
   minimum_karma: number;
 }
 
+/**
+ * Viewer session authentication details.
+ */
 interface UserStatus {
   isMod: boolean;
   username: string | null;
 }
 
+/**
+ * Historical portal statistics retrieved from Redis.
+ */
 interface ModStats {
   approved: number;
   rejected: number;
   enforcer_bypassed: number;
 }
 
+/**
+ * PostPilot Interactive Composer Component.
+ * Implements real-time Markdown rendering, rule checklists, clipboard paste security,
+ * and a private Telemetry Hub for subreddit moderators.
+ */
 export default function App() {
+  // State Machine Configuration
   const [appState, setAppState] = useState<ComposerState>('INITIALIZING');
   const [rules, setRules] = useState<SubredditRules | null>(null);
   const [userStatus, setUserStatus] = useState<UserStatus | null>(null);
   const [modStats, setModStats] = useState<ModStats | null>(null);
   const [showModDashboard, setShowModDashboard] = useState<boolean>(false);
 
-  // Form State
+  // Composer Form States
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  
+  /**
+   * Client-side generated UUID representing this draft session.
+   * Sent to the Hono server to acquire a Redis NX idempotency lock.
+   */
   const [clientUuid] = useState(() => {
-    // Generate UUID fallback
     return 'post-' + Date.now() + '-' + Math.random().toString(36).substring(2, 11);
   });
   
-  // Validation Errors
+  // Rule Engine Validation Errors
   const [titleError, setTitleError] = useState<string | null>(null);
   const [bodyError, setBodyError] = useState<string | null>(null);
   const [blacklistError, setBlacklistError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
 
-  // Fetch Rules & User Info on Mount
   useEffect(() => {
     async function initData() {
       try {
-        const [rulesRes, statusRes] = await Promise.all([
-          fetch('/api/rules'),
-          fetch('/api/user-status'),
+        const [rulesData, statusData] = await Promise.all([
+          callBackend('GET_RULES'),
+          callBackend('GET_USER_STATUS'),
         ]);
-
-        if (!rulesRes.ok || !statusRes.ok) {
-          throw new Error('Failed to load portal configuration.');
-        }
-
-        const rulesData: SubredditRules = await rulesRes.json();
-        const statusData: UserStatus = await statusRes.json();
 
         setRules(rulesData);
         setUserStatus(statusData);
@@ -74,7 +116,9 @@ export default function App() {
     initData();
   }, []);
 
-  // Fetch Stats when showing Mod Dashboard
+  /**
+   * Fetch moderator telemetry counters whenever the Dashboard is visible.
+   */
   useEffect(() => {
     if (showModDashboard) {
       fetchStats();
@@ -83,17 +127,17 @@ export default function App() {
 
   async function fetchStats() {
     try {
-      const res = await fetch('/api/stats');
-      if (res.ok) {
-        const data: ModStats = await res.json();
-        setModStats(data);
-      }
+      const data: ModStats = await callBackend('GET_STATS');
+      setModStats(data);
     } catch (err) {
       console.error('Failed to fetch stats:', err);
     }
   }
 
-  // Real-time rules validation (Debounced)
+  /**
+   * Real-time validation checklist trigger (Debounced 300ms).
+   * Prevents UI stutter during active drafting.
+   */
   useEffect(() => {
     if (appState !== 'DRAFTING' || !rules) return;
 
@@ -106,7 +150,11 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [title, body, rules, appState]);
 
-  // Intercept paste event to strip rich media / HTML and keep bundle under 4MB limit
+  /**
+   * Clipboard Pasteurizer: Intercepts paste events in the text editor.
+   * Strips images and limits huge HTML paste footprints to prevent bloating
+   * request payloads beyond the maximum 4MB Devvit transmission limit.
+   */
   function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -122,7 +170,7 @@ export default function App() {
     const htmlData = e.clipboardData.getData('text/html');
     if (htmlData && htmlData.length > 50000) {
       e.preventDefault();
-      // Strip html and insert pure text to prevent huge base64 payload bloating
+      // Inject fallback plain text instead of formatted heavy HTML nodes
       const plainText = e.clipboardData.getData('text/plain');
       const start = e.currentTarget.selectionStart;
       const end = e.currentTarget.selectionEnd;
@@ -131,7 +179,6 @@ export default function App() {
     }
   }
 
-  // Handle Publishing to Subreddit
   async function handlePublish(e: React.FormEvent) {
     e.preventDefault();
     if (titleError || bodyError || blacklistError || !rules) return;
@@ -139,30 +186,17 @@ export default function App() {
     setAppState('VALIDATING');
 
     try {
-      // Local client checks before server upload
       if (!title.trim()) {
         throw new Error('Title cannot be empty');
       }
 
       setAppState('SUBMITTING');
 
-      const response = await fetchWithRetry('/api/publish', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title,
-          body,
-          uuid: clientUuid,
-        }),
+      const result = await callBackend('PUBLISH', {
+        title,
+        body,
+        uuid: clientUuid,
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to submit post');
-      }
 
       setPublishedUrl(result.url);
       setAppState('SUCCESS');
@@ -172,7 +206,9 @@ export default function App() {
     }
   }
 
-  // Reset Form for New Submission
+  /**
+   * Resets editing state variables for a clean, new submission workflow.
+   */
   function resetComposer() {
     setTitle('');
     setBody('');

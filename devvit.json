@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "postaviator",
+  "name": "postpilot-portal",
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -8,10 +8,6 @@
         "entry": "index.html"
       }
     }
-  },
-  "server": {
-    "dir": "dist/server",
-    "entry": "index.js"
   },
   "permissions": {
     "redis": true,

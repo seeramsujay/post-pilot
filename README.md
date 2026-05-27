@@ -10,6 +10,9 @@ Traditional Reddit moderation is reactive: AutoModerator and custom bots scan an
 
 ## ⚡ Quick Start: Get Running in 30 Seconds
 
+> [!NOTE]
+> The registered Devvit app slug name inside `devvit.json` is `postaviator`. When running playtesting or installation commands, this is configured automatically by the CLI.
+
 Follow these quick commands to spin up the local development/playtest environment and verify the test suites:
 
 ### 1. Install Dependencies
