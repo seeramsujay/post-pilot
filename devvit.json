@@ -54,19 +54,5 @@
         "defaultValue": 0
       }
     }
-  },
-  "triggers": {
-    "onPostSubmit": "/internal/on-post-submit"
-  },
-  "menu": {
-    "items": [
-      {
-        "label": "Deploy PostPilot Interactive Portal",
-        "description": "Submit a stickied custom post hosting the PostPilot composer.",
-        "location": "subreddit",
-        "forUserType": "moderator",
-        "endpoint": "/internal/menu/deploy"
-      }
-    ]
   }
 }

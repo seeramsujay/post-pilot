@@ -2,6 +2,8 @@
 
 > Shift moderation left. Validate, filter, and enforce subreddit policies directly in a client-side React sandbox before the post ever touches the Reddit database.
 
+![PostPilot Portal Dashboard](postpilot_portal_dashboard.png)
+
 Traditional Reddit moderation is reactive: AutoModerator and custom bots scan and delete rule-breaking content *after* it pollutes the database, clutters mod queues, and frustrates users who spent time formatting drafts. 
 
 **PostPilot** transforms moderation from a janitorial task into architectural enforcement. Deployed as a stickied Devvit Web application, it provides an isolated drafting portal that checks regex title structures, body lengths, and blacklist keywords locally. Bypasses are blocked by a backend enforcer, while moderators monitor operations via a private telemetry hub.
@@ -11,7 +13,7 @@ Traditional Reddit moderation is reactive: AutoModerator and custom bots scan an
 ## ⚡ Quick Start: Get Running in 30 Seconds
 
 > [!NOTE]
-> The registered Devvit app slug name inside `devvit.json` is `postaviator`. When running playtesting or installation commands, this is configured automatically by the CLI.
+> The registered Devvit app slug name inside `devvit.json` is `postpilot-portal`. When running playtesting or installation commands, this is configured automatically by the CLI.
 
 Follow these quick commands to spin up the local development/playtest environment and verify the test suites:
 
@@ -21,32 +23,21 @@ npm install
 ```
 
 ### 2. Run the Verification Tests
-Run the 34 unit tests covering Hono routers, Redis locking, and client Markdown engines:
+Run the unit tests covering client Markdown engines and input validators:
 ```bash
 npm test
 ```
 
-### 3. Log In to Devvit
-Authenticate with your Reddit developer credentials:
-```bash
-npx devvit login
-```
-
-### 4. Start Local Playtest
-Deploy the app locally and tunnel it to your test subreddit (recompiles automatically on code save):
-```bash
-npx devvit playtest <your-test-subreddit>
-```
-
-### 5. Build & Ship for Production
-Compile optimized client and server bundles:
+### 3. Build Client Assets
+Compile the React WebView application using Vite:
 ```bash
 npm run build
 ```
-Upload the production code to the Devvit App Registry and install it on your subreddit:
+
+### 4. Start Local Playtest on ughackathons Subreddit
+Deploy the app locally and install it to the `ughackathons` playtest subreddit:
 ```bash
-npx devvit upload
-npx devvit install <your-subreddit-name>
+npx devvit playtest ughackathons
 ```
 
 ---
@@ -55,7 +46,7 @@ npx devvit install <your-subreddit-name>
 
 - **⚡ Zero-Latency Client Validation**: Real-time validation checklist (title regex, word counts, blacklist) matches subreddit rules as the user types.
 - **🛡️ Digital Fortress Backend**: Secondary validation of account age and karma prevents API spoofing. 
-- **🔒 Redis NX Idempotency Lock**: A 15-second submission lock eliminates duplicate posts under unstable connections.
+- **🔒 Redis NX Idempotency Lock**: A 10-second submission lock eliminates duplicate posts under unstable connections.
 - **🤖 Fallback Enforcer Trigger**: A background `PostSubmit` hook instantly deletes native posts that bypass the portal, replying with an official mod warning.
 - **📊 Moderator Telemetry Hub**: Private dashboard for moderators to view approved posts, block rates, and enforcer bypass counts with pure-CSS visuals.
 - **✍️ Live Markdown Preview**: Custom lightweight parser renders rich text drafts instantly without massive external dependencies.
@@ -69,24 +60,24 @@ npx devvit install <your-subreddit-name>
 sequenceDiagram
     autonumber
     actor User as Subreddit Member
-    participant C as React Client (Vite Webview)
-    participant S as Hono Server (Node.js Isolate)
+    participant C as React Client (WebView)
+    participant B as Devvit Backend (main.tsx Runner)
     participant R as Reddit API & Redis
     
     User->>C: Open Stickied Portal
-    C->>S: GET /api/rules
-    S->>R: Fetch Subreddit Settings
-    R-->>S: Rules Configuration
-    S-->>C: JSON rules payload
+    C->>B: window.parent.postMessage('GET_RULES', requestId)
+    B->>R: Fetch Subreddit Settings
+    R-->>B: Rules Configuration
+    B-->>C: ui.webView.postMessage(rules, requestId)
     Note over C: Instant feedback as user types
     User->>C: Click Publish Post
-    C->>S: POST /api/publish (Draft + UUID)
-    Note over S: Acquire 15s Redis Lock
-    S->>R: Verify account age & karma
-    S->>R: Submit Post (RunAs: USER) & Apply Flair
-    S->>R: Write portal_post:${postId} to Redis (1h TTL)
-    S->>R: Increment Approved Stats
-    S-->>C: HTTP 200 (Success Permalink)
+    C->>B: window.parent.postMessage('PUBLISH', { title, body, uuid }, requestId)
+    Note over B: Acquire 10s Redis Lock
+    B->>R: Verify account age & karma
+    B->>R: Submit Post (RunAs: USER) & Apply Flair
+    B->>R: Write portal_post:${postId} to Redis (1h TTL)
+    B->>R: Increment Approved Stats
+    B-->>C: ui.webView.postMessage({ success: true, url }, requestId)
 ```
 
 ---
@@ -119,7 +110,7 @@ devvit login
 ```
 
 ### 2. Scaffold and Build
-Install local dependencies and compile both the Hono backend and React frontend:
+Install local dependencies and compile the React frontend:
 ```bash
 npm install
 npm run build
@@ -152,20 +143,4 @@ npm test
 
 ### Coverage Areas
 - **Client Utilities (`src/client/utils.test.ts`)**: Verifies title regexes, character count thresholds, blacklist checks, and Markdown block/list parsers.
-- **Server Endpoints (`src/server/index.test.ts`)**: Tests Hono router endpoints, Redis idempotency locking logic, user qualification criteria, and the background enforcer auto-removal mechanism.
 
----
-
-## 📦 Bundle Optimization Specs
-PostPilot is designed for performance under Devvit's V8 execution limits:
-- **Vite Client Bundle**: `~170 kB` (HTML + React + CSS)
-- **Esbuild Server Bundle**: `~67 kB` (Hono Server Router)
-- **Total Application Footprint**: `< 240 kB` (Allows fast startup times, loading instantly inside the Reddit iframe sandbox, well below the 4MB limit).
-
----
-
-## 🤝 Contributing Guidelines
-
-1. Keep all state management flat and centralized in `src/client/App.tsx`.
-2. Place helper functions and validators in `src/client/utils.ts` to ensure clean unit-testing separation.
-3. Maintain TypeScript compilation safety: verify changes compile successfully via `npm run build` and all tests pass with `npm test` before committing.
