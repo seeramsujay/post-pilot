@@ -1,0 +1,77 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "postpilot",
+  "version": "0.1.0",
+  "post": {
+    "dir": "dist/client",
+    "entrypoints": {
+      "default": {
+        "entry": "index.html"
+      }
+    }
+  },
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.js"
+  },
+  "permissions": {
+    "redis": true,
+    "reddit": {
+      "enable": true,
+      "scope": "moderator"
+    }
+  },
+  "settings": {
+    "subreddit": {
+      "title_regex": {
+        "type": "string",
+        "label": "Title Regex Pattern",
+        "defaultValue": ""
+      },
+      "min_body": {
+        "type": "number",
+        "label": "Minimum Body Character Count",
+        "defaultValue": 0
+      },
+      "flair_id": {
+        "type": "string",
+        "label": "Auto-assigned Flair Template ID",
+        "defaultValue": ""
+      },
+      "enforcer": {
+        "type": "boolean",
+        "label": "Enable Automated Post Removal (Enforcer)",
+        "defaultValue": true
+      },
+      "keyword_blacklist": {
+        "type": "string",
+        "label": "Comma-separated Blacklisted Keywords",
+        "defaultValue": ""
+      },
+      "minimum_account_age": {
+        "type": "number",
+        "label": "Minimum Account Age (Days)",
+        "defaultValue": 0
+      },
+      "minimum_karma": {
+        "type": "number",
+        "label": "Minimum Combined Karma",
+        "defaultValue": 0
+      }
+    }
+  },
+  "triggers": {
+    "onPostSubmit": "/internal/on-post-submit"
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Deploy PostPilot Interactive Portal",
+        "description": "Submit a stickied custom post hosting the PostPilot composer.",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/deploy"
+      }
+    ]
+  }
+}

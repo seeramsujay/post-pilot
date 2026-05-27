@@ -1,0 +1,24 @@
+# Dependency directories
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Local Devvit cache and secrets
+.devvit/
+credentials.json
+.env
+.env.local
+.env.*.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# System files
+.DS_Store
+Thumbs.db
