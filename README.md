@@ -103,32 +103,42 @@ PostPilot rules are defined declaratively in the `devvit.json` settings schema:
 Follow these steps to deploy PostPilot to your subreddit:
 
 ### 1. Prerequisites
-Ensure you have the Devvit CLI installed and are logged into your Reddit account:
+Ensure you are logged into your Reddit account via the CLI:
 ```bash
-npm install -g @devvit/cli
-devvit login
+npx devvit login
 ```
 
 ### 2. Scaffold and Build
-Install local dependencies and compile the React frontend:
+Install local dependencies and compile the React frontend assets:
 ```bash
 npm install
 npm run build
 ```
 
-### 3. Upload & Install
-Upload the build bundles to Reddit's app registry and install it on your subreddit:
+### 3. Playtesting (Local Development)
+To test and verify changes instantly on your test subreddit before publishing:
 ```bash
-devvit upload
-devvit install <your-subreddit-name>
+npx devvit playtest <your-test-subreddit>
 ```
 
-### 4. Deploy Portal Post
+### 4. Publish to Registry
+When ready to release your version to the Devvit App Directory, run:
+```bash
+npx devvit publish
+```
+
+### 5. Subreddit Installation
+Install the published application on your subreddit:
+```bash
+npx devvit install <your-subreddit-name>
+```
+
+### 6. Deploy Portal Post
 Once installed:
 1. Navigate to your subreddit's native moderation menu in the Reddit UI.
 2. Select **"Deploy PostPilot Interactive Portal"**.
 3. PostPilot will submit the portal canvas post and pin it to sticky slot 1.
-4. Configure rules inside your Subreddit's App Settings console.
+4. Configure your desired rules inside your Subreddit's App Settings console.
 
 ---
 
