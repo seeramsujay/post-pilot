@@ -8,6 +8,46 @@ Traditional Reddit moderation is reactive: AutoModerator and custom bots scan an
 
 ---
 
+## ⚡ Quick Start: Get Running in 30 Seconds
+
+Follow these quick commands to spin up the local development/playtest environment and verify the test suites:
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Run the Verification Tests
+Run the 34 unit tests covering Hono routers, Redis locking, and client Markdown engines:
+```bash
+npm test
+```
+
+### 3. Log In to Devvit
+Authenticate with your Reddit developer credentials:
+```bash
+npx devvit login
+```
+
+### 4. Start Local Playtest
+Deploy the app locally and tunnel it to your test subreddit (recompiles automatically on code save):
+```bash
+npx devvit playtest <your-test-subreddit>
+```
+
+### 5. Build & Ship for Production
+Compile optimized client and server bundles:
+```bash
+npm run build
+```
+Upload the production code to the Devvit App Registry and install it on your subreddit:
+```bash
+npx devvit upload
+npx devvit install <your-subreddit-name>
+```
+
+---
+
 ## ✨ Features
 
 - **⚡ Zero-Latency Client Validation**: Real-time validation checklist (title regex, word counts, blacklist) matches subreddit rules as the user types.

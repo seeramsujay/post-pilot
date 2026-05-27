@@ -1,7 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "postpilot",
-  "version": "0.1.0",
   "post": {
     "dir": "dist/client",
     "entrypoints": {

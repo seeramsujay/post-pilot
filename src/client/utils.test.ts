@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { parseMarkdown, validateTitle, validateBody, validateBlacklist } from './utils';
+import { describe, it, expect, vi } from 'vitest';
+import { parseMarkdown, validateTitle, validateBody, validateBlacklist, fetchWithRetry } from './utils';
 
 describe('Markdown Parser', () => {
   it('should parse headers correctly', () => {
@@ -84,3 +84,51 @@ describe('Input Validators', () => {
     });
   });
 });
+
+describe('fetchWithRetry', () => {
+  it('should return response directly if it is successful', async () => {
+    const mockFetch = vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+    } as any);
+
+    const res = await fetchWithRetry('http://example.com', {}, 3, 1);
+    expect(res.ok).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    mockFetch.mockRestore();
+  });
+
+  it('should retry on 5xx errors and eventually throw or return', async () => {
+    const mockFetch = vi.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({ ok: false, status: 502 } as any)
+      .mockResolvedValueOnce({ ok: false, status: 503 } as any)
+      .mockResolvedValueOnce({ ok: true, status: 200 } as any);
+
+    const res = await fetchWithRetry('http://example.com', {}, 3, 1);
+    expect(res.ok).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    mockFetch.mockRestore();
+  });
+
+  it('should not retry on 4xx client errors', async () => {
+    const mockFetch = vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 400,
+    } as any);
+
+    const res = await fetchWithRetry('http://example.com', {}, 3, 1);
+    expect(res.ok).toBe(false);
+    expect(res.status).toBe(400);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    mockFetch.mockRestore();
+  });
+
+  it('should retry on network throw error and eventually fail', async () => {
+    const mockFetch = vi.spyOn(global, 'fetch').mockRejectedValue(new Error('Network drop'));
+
+    await expect(fetchWithRetry('http://example.com', {}, 2, 1)).rejects.toThrow('Network drop');
+    expect(mockFetch).toHaveBeenCalledTimes(3); // 1 initial + 2 retries
+    mockFetch.mockRestore();
+  });
+});
+

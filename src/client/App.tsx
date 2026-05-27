@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { parseMarkdown, validateTitle, validateBody, validateBlacklist } from './utils';
+import { parseMarkdown, validateTitle, validateBody, validateBlacklist, fetchWithRetry } from './utils';
 
 // Client States
 type ComposerState = 'INITIALIZING' | 'DRAFTING' | 'VALIDATING' | 'SUBMITTING' | 'SUCCESS' | 'ERROR';
@@ -146,7 +146,7 @@ export default function App() {
 
       setAppState('SUBMITTING');
 
-      const response = await fetch('/api/publish', {
+      const response = await fetchWithRetry('/api/publish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
