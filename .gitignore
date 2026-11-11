@@ -22,3 +22,6 @@ lerna-debug.log*
 # System files
 .DS_Store
 Thumbs.db
+
+__pycache__/
+*.pyc
