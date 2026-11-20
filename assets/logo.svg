@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E121A" />
+      <stop offset="50%" stop-color="#181E29" />
+      <stop offset="100%" stop-color="#0A0D14" />
+    </linearGradient>
+
+    <!-- PostPilot Flight Gradient -->
+    <linearGradient id="pilot-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF4500" />
+      <stop offset="50%" stop-color="#FF6B35" />
+      <stop offset="100%" stop-color="#00D2FF" />
+    </linearGradient>
+
+    <linearGradient id="wing-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF4500" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#FF9E00" stop-opacity="0.2" />
+    </linearGradient>
+
+    <linearGradient id="core-glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FF4500" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#00D2FF" stop-opacity="0.05" />
+    </linearGradient>
+
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="subtle-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="800" rx="160" fill="url(#bg-grad)" />
+  <rect width="796" height="796" x="2" y="2" rx="158" fill="none" stroke="#263143" stroke-width="2" />
+
+  <!-- Radar & Flight Telemetry Circles -->
+  <g opacity="0.16" stroke="#00D2FF" stroke-width="1.5">
+    <circle cx="400" cy="380" r="140" fill="none" stroke-dasharray="6 6" />
+    <circle cx="400" cy="380" r="230" fill="none" stroke-dasharray="8 8" />
+    <line x1="400" y1="120" x2="400" y2="640" stroke-dasharray="4 8" />
+    <line x1="140" y1="380" x2="660" y2="380" stroke-dasharray="4 8" />
+  </g>
+
+  <!-- Enforcer Shield Perimeter Orbit -->
+  <path d="M 240 240 A 230 230 0 0 1 560 240" fill="none" stroke="#FF4500" stroke-width="4" stroke-dasharray="12 10" opacity="0.5" />
+  <path d="M 560 520 A 230 230 0 0 1 240 520" fill="none" stroke="#00D2FF" stroke-width="4" stroke-dasharray="8 8" opacity="0.5" />
+
+  <!-- The Supersonic PostPilot Glider / Aircraft (Main Hero Symbol) -->
+  <!-- Left Wing -->
+  <polygon points="400,190 220,470 370,430" fill="url(#wing-accent)" stroke="#FF4500" stroke-width="4" filter="url(#glow)" />
+
+  <!-- Right Wing -->
+  <polygon points="400,190 580,470 430,430" fill="#182333" stroke="#00D2FF" stroke-width="4" filter="url(#glow)" />
+
+  <!-- Center Fuselage / Keel -->
+  <polygon points="400,190 400,430 430,430" fill="#00D2FF" opacity="0.3" />
+  <line x1="400" y1="190" x2="400" y2="460" stroke="#F8FAFC" stroke-width="5" stroke-linecap="round" />
+
+  <!-- Validation Status Checkmark / Pilot Beacon at Center -->
+  <g filter="url(#subtle-glow)">
+    <!-- Propulsion Jet Exhaust Rings -->
+    <ellipse cx="400" cy="460" rx="30" ry="12" fill="none" stroke="#FF4500" stroke-width="3" opacity="0.8" />
+    <ellipse cx="400" cy="485" rx="20" ry="8" fill="none" stroke="#FF6B35" stroke-width="2.5" opacity="0.6" />
+    <ellipse cx="400" cy="505" rx="10" ry="4" fill="none" stroke="#00D2FF" stroke-width="2" opacity="0.4" />
+
+    <!-- Reddit Upvote / Jet Arrow Accent -->
+    <polygon points="400,280 430,330 415,330 415,370 385,370 385,330 370,330" fill="#FF4500" stroke="#F8FAFC" stroke-width="2" />
+  </g>
+
+  <!-- Typography -->
+  <text x="400" y="680" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="34" font-weight="800" fill="#F8FAFC" letter-spacing="4">
+    POST<tspan fill="#FF4500">PILOT</tspan>
+  </text>
+  <text x="400" y="718" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" fill="#94A3B8" letter-spacing="3">
+    DEVVIT INTERACTIVE POSTING PORTAL &amp; ENFORCER
+  </text>
+</svg>
